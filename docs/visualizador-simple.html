@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Automação</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 1200px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            min-height: 600px;
+        }
+        .diagram {
+            padding: 40px;
+            background: #fafafa;
+            overflow: auto;
+        }
+        svg { width: 100%; height: auto; min-height: 500px; }
+        .legend {
+            padding: 20px;
+            overflow-y: auto;
+            background: white;
+            border-left: 1px solid #eee;
+        }
+        .legend h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .legend-item {
+            margin-bottom: 12px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .node-circle { cursor: pointer; transition: r 0.2s; }
+        .node-circle:hover { r: 35; }
+        .node-text { font-size: 11px; text-anchor: middle; pointer-events: none; }
+        .link-line { stroke: #999; stroke-width: 2; fill: none; }
+        @media (max-width: 768px) {
+            .content { grid-template-columns: 1fr; }
+            .legend { display: none; }
+            .header h1 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Sistema de Automação: Meta → Newsletter → GHL → Slack</h1>
+            <p>Fluxo de dados - Clica nos nós para detalhes</p>
+        </div>
+
+        <div class="content">
+            <div class="diagram">
+                <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Links/Conexões -->
+                    <line class="link-line" x1="100" y1="100" x2="200" y2="100" />
+                    <line class="link-line" x1="200" y1="100" x2="300" y2="150" />
+                    <line class="link-line" x1="300" y1="150" x2="400" y2="150" />
+                    <line class="link-line" x1="400" y1="150" x2="500" y2="150" />
+                    <line class="link-line" x1="500" y1="150" x2="600" y2="200" />
+                    <line class="link-line" x1="600" y1="200" x2="600" y2="300" />
+                    <line class="link-line" x1="600" y1="300" x2="500" y2="350" />
+                    <line class="link-line" x1="500" y1="350" x2="400" y2="400" />
+                    <line class="link-line" x1="400" y1="400" x2="300" y2="450" />
+                    <line class="link-line" x1="300" y1="100" x2="300" y2="50" />
+
+                    <!-- Nó: Meta API (Vermelho) -->
+                    <circle class="node-circle" cx="100" cy="100" r="30" fill="#FF6B6B" stroke="#333" stroke-width="2" />
+                    <text class="node-text" x="100" y="105" fill="#fff" font-weight="bold">Meta</text>
+
+                    <!-- Nó: MetaAdsClient (Azul) -->
+                    <circle class="node-circle" cx="200" cy="100" r="30" fill="#4ECDC4" stroke="#333" stroke-width="2" />
+                    <text class="node-text" x="200" y="105" fill="#fff" font-weight="bold">Client</text>
+
+                    <!-- Nó: Fetch (Azul) -->
+                    <circle class="node-circle" cx="300" cy="150" r="30" fill="#4ECDC4" stroke="#333" stroke-width="2" />
+                    <text class="node-text" x="300" y="155" fill="#fff" font-weight="bold">Fetch</text>
+
+                    <!-- Nó: Insights (Azul) -->
+                    <circle class="node-circle" cx="400" cy="150" r="30" fill="#4ECDC4" stroke="#333" stroke-width="2" />
+                    <text class="node-text" x="400" y="155" fill="#fff" font-weight="bold">Insights</text>
+
+                    <!-- Nó: Filter (Azul) -->
+                    <circle class="node-circle" cx="500" cy="150" r="30" fill="#4ECDC4" stroke="#333" stroke-width="2" />
+                    <text class="node-text" x="500" y="155" fill="#fff" font-weight="bold">Filter</text>
+
+                    <!-- Nó: Generator (Azul) -->
+                    <circle class="node-circle" cx="600" cy="200" r="30" fill="#4ECDC4" stroke="#333" stroke-width="2" />
+                    <text class="node-text" x="600" y="205" fill="#fff" font-weight="bold">Generator</text>
+
+                    <!-- Nó: GHL (Turquesa) -->
+                    <circle class="node-circle" cx="600" cy="300" r="30" fill="#95E1D3" stroke="#333" stroke-width="2" />
+                    <text class="node-text" x="600" y="305" fill="#333" font-weight="bold">GHL</text>
+
+                    <!-- Nó: Schedule (Amarelo) -->
+                    <circle class="node-circle" cx="500" cy="350" r="30" fill="#F9CA24" stroke="#333" stroke-width="2" />
+                    <text class="node-text" x="500" y="355" fill="#333" font-weight="bold">Schedule</text>
+
+                    <!-- Nó: Slack (Turquesa) -->
+                    <circle class="node-circle" cx="400" cy="400" r="30" fill="#95E1D3" stroke="#333" stroke-width="2" />
+                    <text class="node-text" x="400" y="405" fill="#333" font-weight="bold">Slack</text>
+
+                    <!-- Nó: Notify (Amarelo) -->
+                    <circle class="node-circle" cx="300" cy="450" r="30" fill="#F9CA24" stroke="#333" stroke-width="2" />
+                    <text class="node-text" x="300" y="455" fill="#333" font-weight="bold">Notify</text>
+
+                    <!-- Nó: Docs (Roxo) -->
+                    <circle class="node-circle" cx="300" cy="50" r="30" fill="#667EEA" stroke="#333" stroke-width="2" />
+                    <text class="node-text" x="300" y="55" fill="#fff" font-weight="bold">Docs</text>
+                </svg>
+            </div>
+
+            <div class="legend">
+                <h3>📋 Legenda</h3>
+
+                <h4 style="color: #667eea; font-size: 13px; margin-top: 10px;">Camadas</h4>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #FF6B6B;"></span>
+                    Input (APIs)
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #4ECDC4;"></span>
+                    Processing
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #95E1D3;"></span>
+                    Output (APIs)
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #F9CA24;"></span>
+                    Actions
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #667EEA;"></span>
+                    Documentação
+                </div>
+
+                <h4 style="color: #667eea; font-size: 13px; margin-top: 15px;">Instruções</h4>
+                <div class="legend-item">
+                    • Clica nos nós<br>
+                    • Vê detalhes<br>
+                    • Scroll para zoom
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.node-circle').forEach(circle => {
+            const labels = {
+                'Meta': 'Meta Ads API\nFonte de dados',
+                'Client': 'MetaAdsClient\nAutenticação',
+                'Fetch': 'Fetch Campaigns\nBusca dados',
+                'Insights': 'Get Insights\nMétricas',
+                'Filter': 'Filter Data\nPerformance > 0.7',
+                'Generator': 'Newsletter\nGera HTML',
+                'GHL': 'GHL API\nScheduling',
+                'Schedule': 'Schedule Email\nAgenda',
+                'Slack': 'Slack API\nNotificações',
+                'Notify': 'Send Notification\nNotifica',
+                'Docs': 'Documentação\nGuides & Refs'
+            };
+
+            circle.addEventListener('click', function() {
+                const text = this.nextElementSibling.textContent;
+                const info = labels[text] || text;
+                alert(info);
+            });
+        });
+    </script>
+</body>
+</html>
