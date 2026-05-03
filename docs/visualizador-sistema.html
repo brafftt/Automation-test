@@ -175,36 +175,22 @@
     </div>
 
     <script type="text/javascript">
-        // Definir dados
         const nodes = new vis.DataSet([
-            // INPUT
             { id: 'meta-api', label: 'Meta Ads API', color: '#FF6B6B', title: 'Meta Ads API\nFonte de dados das campanhas' },
-
-            // CLIENTS
             { id: 'meta-client', label: 'MetaAdsClient', color: '#4ECDC4', title: 'MetaAdsClient\nAutenticação e fetch de dados' },
             { id: 'ghl-client', label: 'GHLClient', color: '#95E1D3', title: 'GHLClient\nAutenticação GHL' },
             { id: 'slack-client', label: 'SlackNotifier', color: '#95E1D3', title: 'SlackNotifier\nNotificações Slack' },
-
-            // PROCESSING
             { id: 'fetch', label: 'Fetch Campaigns', color: '#4ECDC4', title: 'Fetch Campaigns\nBusca todas as campanhas' },
             { id: 'insights', label: 'Get Insights', color: '#4ECDC4', title: 'Get Insights\nMetricas de cada campanha' },
             { id: 'filter', label: 'Filter Data', color: '#4ECDC4', title: 'Filter Data\nFiltra por performance (>0.7)' },
             { id: 'rank', label: 'Rank Items', color: '#4ECDC4', title: 'Rank Items\nClassifica top 5' },
-
-            // GENERATION
             { id: 'generator', label: 'Newsletter Generator', color: '#4ECDC4', title: 'Newsletter Generator\nGera HTML e email' },
             { id: 'template', label: 'Template Engine', color: '#4ECDC4', title: 'Template Engine\nJinja2 rendering' },
             { id: 'html', label: 'Email HTML', color: '#4ECDC4', title: 'Email HTML\nHTML formatado' },
-
-            // OUTPUT
             { id: 'ghl-api', label: 'GHL API', color: '#95E1D3', title: 'GHL API\nScheduling emails' },
             { id: 'slack-api', label: 'Slack API', color: '#95E1D3', title: 'Slack API\nNotificações' },
-
-            // ACTIONS
             { id: 'schedule', label: 'Schedule Email', color: '#F9CA24', title: 'Schedule Email\nAgenda no GHL' },
             { id: 'notify', label: 'Send Notification', color: '#F9CA24', title: 'Send Notification\nNotifica no Slack' },
-
-            // DOCUMENTATION
             { id: 'docs', label: '📚 Documentação', color: '#667EEA', title: 'Documentação Completa\nGuides, APIs, Setup' },
             { id: 'strategy', label: 'Newsletter Strategy', color: '#667EEA', title: 'Newsletter Strategy\nPadrões e templates' },
             { id: 'templates', label: 'Content Templates', color: '#667EEA', title: 'Content Templates\n5 templates prontos' },
@@ -213,93 +199,40 @@
         ]);
 
         const edges = new vis.DataSet([
-            // INPUT FLOW
             { from: 'meta-api', to: 'meta-client', arrows: 'to', color: {color: '#FF6B6B'}, label: 'dados' },
-
-            // FETCH FLOW
             { from: 'meta-client', to: 'fetch', arrows: 'to', color: {color: '#4ECDC4'} },
             { from: 'fetch', to: 'insights', arrows: 'to', color: {color: '#4ECDC4'} },
-
-            // PROCESS FLOW
             { from: 'insights', to: 'filter', arrows: 'to', color: {color: '#4ECDC4'}, label: 'score>0.7' },
             { from: 'filter', to: 'rank', arrows: 'to', color: {color: '#4ECDC4'}, label: 'top 5' },
-
-            // GENERATION FLOW
             { from: 'rank', to: 'generator', arrows: 'to', color: {color: '#4ECDC4'} },
             { from: 'template', to: 'generator', arrows: 'to', color: {color: '#4ECDC4'} },
             { from: 'generator', to: 'html', arrows: 'to', color: {color: '#4ECDC4'} },
-
-            // OUTPUT FLOW
             { from: 'html', to: 'ghl-client', arrows: 'to', color: {color: '#95E1D3'} },
             { from: 'ghl-client', to: 'schedule', arrows: 'to', color: {color: '#95E1D3'} },
             { from: 'schedule', to: 'ghl-api', arrows: 'to', color: {color: '#95E1D3'}, label: 'email' },
-
-            // NOTIFICATION
             { from: 'schedule', to: 'slack-client', arrows: 'to', color: {color: '#95E1D3'} },
             { from: 'slack-client', to: 'notify', arrows: 'to', color: {color: '#95E1D3'} },
             { from: 'notify', to: 'slack-api', arrows: 'to', color: {color: '#95E1D3'}, label: 'msg' },
-
-            // DOCUMENTATION CONNECTIONS
             { from: 'docs', to: 'strategy', arrows: 'to', dashes: true, color: {color: '#667EEA'} },
             { from: 'docs', to: 'templates', arrows: 'to', dashes: true, color: {color: '#667EEA'} },
             { from: 'docs', to: 'metrics', arrows: 'to', dashes: true, color: {color: '#667EEA'} },
             { from: 'docs', to: 'moneymaker', arrows: 'to', dashes: true, color: {color: '#667EEA'} },
         ]);
 
-        // Info box mapping
         const infoData = {
-            'meta-api': {
-                title: 'Meta Ads API',
-                desc: 'Fonte de dados\nRetorna campanhas e insights\nv18.0'
-            },
-            'meta-client': {
-                title: 'MetaAdsClient',
-                desc: 'src/integrations/meta_ads.py\nAutenticação com token\nFetch campaigns e insights'
-            },
-            'fetch': {
-                title: 'Fetch Campaigns',
-                desc: 'Lista todas as campanhas\nFiltra por status ativo\nRetorna meta data'
-            },
-            'insights': {
-                title: 'Get Insights',
-                desc: 'Extrai métricas\nRoas, CTR, CPC, Conversões\nÚltimos 30 dias'
-            },
-            'filter': {
-                title: 'Filter Data',
-                desc: 'Calcula score performance\nFiltra: score > 0.7\nRemove itens fracos'
-            },
-            'rank': {
-                title: 'Rank Items',
-                desc: 'Ordena por performance\nSeleciona top 5\nPrepara para newsletter'
-            },
-            'generator': {
-                title: 'Newsletter Generator',
-                desc: 'src/newsletter/generator.py\nProcessa dados\nGera HTML com Jinja2'
-            },
-            'schedule': {
-                title: 'Schedule Email',
-                desc: 'Cria contato em GHL\nAgenda para amanhã\nObtém ID do email'
-            },
-            'notify': {
-                title: 'Send Notification',
-                desc: 'Envia message ao Slack\nInclui detalhes sucesso\nTimestamp'
-            },
-            'strategy': {
-                title: 'Newsletter Strategy',
-                desc: 'docs/guides/newsletter-strategy.md\nPadrões de assunto\nEstrutura de conteúdo\n4-week cycle'
-            },
-            'templates': {
-                title: 'Content Templates',
-                desc: 'docs/guides/newsletter-templates.md\n5 templates prontos\nEducação, Comparação, Case Study, Provocação'
-            },
-            'metrics': {
-                title: 'Performance Metrics',
-                desc: 'docs/guides/newsletter-performance.md\nOpen rate, CTR, Conversão\nBenchmarks e otimização'
-            },
-            'moneymaker': {
-                title: 'MoneyMaker Insights',
-                desc: 'docs/guides/moneymaker-insights.md\nAnálise do João Gonçalves\nPadrões que funcionam'
-            }
+            'meta-api': { title: 'Meta Ads API', desc: 'Fonte de dados\nRetorna campanhas e insights\nv18.0' },
+            'meta-client': { title: 'MetaAdsClient', desc: 'src/integrations/meta_ads.py\nAutenticação com token\nFetch campaigns e insights' },
+            'fetch': { title: 'Fetch Campaigns', desc: 'Lista todas as campanhas\nFiltra por status ativo\nRetorna meta data' },
+            'insights': { title: 'Get Insights', desc: 'Extrai métricas\nRoas, CTR, CPC, Conversões\nÚltimos 30 dias' },
+            'filter': { title: 'Filter Data', desc: 'Calcula score performance\nFiltra: score > 0.7\nRemove itens fracos' },
+            'rank': { title: 'Rank Items', desc: 'Ordena por performance\nSeleciona top 5\nPrepara para newsletter' },
+            'generator': { title: 'Newsletter Generator', desc: 'src/newsletter/generator.py\nProcessa dados\nGera HTML com Jinja2' },
+            'schedule': { title: 'Schedule Email', desc: 'Cria contato em GHL\nAgenda para amanhã\nObtém ID do email' },
+            'notify': { title: 'Send Notification', desc: 'Envia message ao Slack\nInclui detalhes sucesso\nTimestamp' },
+            'strategy': { title: 'Newsletter Strategy', desc: 'docs/guides/newsletter-strategy.md\nPadrões de assunto\nEstrutura de conteúdo\n4-week cycle' },
+            'templates': { title: 'Content Templates', desc: 'docs/guides/newsletter-templates.md\n5 templates prontos\nEducação, Comparação, Case Study, Provocação' },
+            'metrics': { title: 'Performance Metrics', desc: 'docs/guides/newsletter-performance.md\nOpen rate, CTR, Conversão\nBenchmarks e otimização' },
+            'moneymaker': { title: 'MoneyMaker Insights', desc: 'docs/guides/moneymaker-insights.md\nAnálise do João Gonçalves\nPadrões que funcionam' }
         };
 
         const container = document.getElementById('network');
@@ -360,7 +293,6 @@
 
         const network = new vis.Network(container, {nodes: nodes, edges: edges}, options);
 
-        // Click event
         network.on('click', function(params) {
             if (params.nodes.length > 0) {
                 const nodeId = params.nodes[0];
@@ -376,7 +308,6 @@
             }
         });
 
-        // Double click to expand
         network.on('doubleClick', function(params) {
             if (params.nodes.length > 0) {
                 const nodeId = params.nodes[0];
@@ -384,7 +315,6 @@
             }
         });
 
-        // Fit network on load
         setTimeout(() => {
             network.fit({
                 animation: {
