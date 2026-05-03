@@ -1,0 +1,1 @@
+"""Newsletter generation module."""

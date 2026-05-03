@@ -1,0 +1,21 @@
+{
+  "project": {
+    "name": "Meta Ads to Newsletter Automation",
+    "version": "1.0.0",
+    "description": "Sistema de automação que integra Meta Ads com Newsletter, GHL e Slack"
+  },
+  "api_endpoints": {
+    "meta": "https://graph.instagram.com/v18.0",
+    "ghl": "https://api.gohighlevel.com/v1",
+    "slack": "https://slack.com/api"
+  },
+  "newsletter": {
+    "default_template": "default",
+    "max_items": 5,
+    "min_performance_threshold": 0.7
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  }
+}
