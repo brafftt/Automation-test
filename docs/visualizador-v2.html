@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Automação</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            flex: 1;
+            overflow: hidden;
+        }
+        svg { width: 100%; height: 100%; background: #fafafa; }
+        .legend {
+            padding: 20px;
+            overflow-y: auto;
+            background: white;
+            border-left: 1px solid #eee;
+        }
+        .legend h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .legend-item {
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .node { cursor: pointer; stroke: #333; stroke-width: 2px; }
+        .link { stroke: #999; stroke-opacity: 0.6; }
+        .node-label { font-size: 12px; text-anchor: middle; pointer-events: none; }
+        @media (max-width: 768px) {
+            .content { grid-template-columns: 1fr; }
+            .legend { display: none; }
+            .header h1 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Sistema de Automação: Meta → Newsletter → GHL → Slack</h1>
+            <p>Visualização interativa do fluxo de dados</p>
+        </div>
+
+        <div class="content">
+            <svg id="network"></svg>
+            <div class="legend">
+                <h3>📋 Legenda</h3>
+                <h4 style="margin-top: 15px; color: #667eea; font-size: 13px;">Camadas</h4>
+                <div class="legend-item"><span class="legend-dot" style="background: #FF6B6B;"></span>Input (APIs)</div>
+                <div class="legend-item"><span class="legend-dot" style="background: #4ECDC4;"></span>Processing</div>
+                <div class="legend-item"><span class="legend-dot" style="background: #95E1D3;"></span>Output (APIs)</div>
+                <div class="legend-item"><span class="legend-dot" style="background: #667EEA;"></span>Documentação</div>
+                <h4 style="margin-top: 15px; color: #667eea; font-size: 13px;">Instruções</h4>
+                <div class="legend-item">• Arrasta para mover<br>• Scroll para zoom<br>• Clica em nós</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nodes = [
+            { id: 'meta-api', label: 'Meta Ads API', color: '#FF6B6B' },
+            { id: 'meta-client', label: 'MetaAdsClient', color: '#4ECDC4' },
+            { id: 'fetch', label: 'Fetch', color: '#4ECDC4' },
+            { id: 'insights', label: 'Insights', color: '#4ECDC4' },
+            { id: 'filter', label: 'Filter', color: '#4ECDC4' },
+            { id: 'rank', label: 'Rank', color: '#4ECDC4' },
+            { id: 'generator', label: 'Generator', color: '#4ECDC4' },
+            { id: 'html', label: 'Email HTML', color: '#4ECDC4' },
+            { id: 'ghl-client', label: 'GHLClient', color: '#95E1D3' },
+            { id: 'ghl-api', label: 'GHL API', color: '#95E1D3' },
+            { id: 'schedule', label: 'Schedule', color: '#F9CA24' },
+            { id: 'slack-client', label: 'SlackNotifier', color: '#95E1D3' },
+            { id: 'notify', label: 'Notify', color: '#F9CA24' },
+            { id: 'slack-api', label: 'Slack API', color: '#95E1D3' },
+            { id: 'docs', label: '📚 Docs', color: '#667EEA' },
+        ];
+
+        const links = [
+            { source: 'meta-api', target: 'meta-client' },
+            { source: 'meta-client', target: 'fetch' },
+            { source: 'fetch', target: 'insights' },
+            { source: 'insights', target: 'filter' },
+            { source: 'filter', target: 'rank' },
+            { source: 'rank', target: 'generator' },
+            { source: 'generator', target: 'html' },
+            { source: 'html', target: 'ghl-client' },
+            { source: 'ghl-client', target: 'schedule' },
+            { source: 'schedule', target: 'ghl-api' },
+            { source: 'schedule', target: 'slack-client' },
+            { source: 'slack-client', target: 'notify' },
+            { source: 'notify', target: 'slack-api' },
+        ];
+
+        const svg = d3.select('#network');
+        const width = svg.node().clientWidth;
+        const height = svg.node().clientHeight;
+
+        const simulation = d3.forceSimulation(nodes)
+            .force('link', d3.forceLink(links).id(d => d.id).distance(80))
+            .force('charge', d3.forceManyBody().strength(-300))
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('collision', d3.forceCollide().radius(40));
+
+        const link = svg.append('g')
+            .selectAll('line')
+            .data(links)
+            .enter()
+            .append('line')
+            .attr('class', 'link')
+            .attr('stroke', '#999');
+
+        const node = svg.append('g')
+            .selectAll('circle')
+            .data(nodes)
+            .enter()
+            .append('circle')
+            .attr('class', 'node')
+            .attr('r', 30)
+            .attr('fill', d => d.color)
+            .attr('stroke', '#333')
+            .attr('stroke-width', 2)
+            .call(d3.drag()
+                .on('start', dragStarted)
+                .on('drag', dragged)
+                .on('end', dragEnded));
+
+        const labels = svg.append('g')
+            .selectAll('text')
+            .data(nodes)
+            .enter()
+            .append('text')
+            .attr('class', 'node-label')
+            .attr('dy', '0.31em')
+            .text(d => d.label.replace(/^./, s => s.toUpperCase()).substring(0, 8));
+
+        simulation.on('tick', () => {
+            link
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+            node
+                .attr('cx', d => d.x)
+                .attr('cy', d => d.y);
+            labels
+                .attr('x', d => d.x)
+                .attr('y', d => d.y);
+        });
+
+        function dragStarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragEnded(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        node.on('click', (event, d) => {
+            alert(`${d.label}\n\nClique noutra parte para continuar`);
+        });
+    </script>
+</body>
+</html>
