@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Automação: Meta → Newsletter → GHL → Slack</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            height: calc(100vh - 200px);
+        }
+
+        #network {
+            border-right: 1px solid #eee;
+            background: #fafafa;
+        }
+
+        .legend {
+            padding: 20px;
+            overflow-y: auto;
+            background: white;
+        }
+
+        .legend h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .legend-item {
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 12px;
+            max-width: 300px;
+            display: none;
+        }
+
+        .info-panel.visible {
+            display: block;
+        }
+
+        .info-panel h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .info-panel p {
+            color: #666;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .legend {
+                display: none;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Sistema de Automação: Meta → Newsletter → GHL → Slack</h1>
+            <p>Visualização interativa do fluxo de dados • Clica nos nós para ver detalhes</p>
+        </div>
+
+        <div class="content">
+            <div id="network"></div>
+            <div class="legend">
+                <h3>📋 Legenda</h3>
+
+                <h4 style="margin-top: 15px; color: #667eea; font-size: 13px;">Camadas</h4>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #FF6B6B;"></span>
+                    Input (APIs Externas)
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #4ECDC4;"></span>
+                    Processing
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #95E1D3;"></span>
+                    Output (APIs)
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #667EEA;"></span>
+                    Documentação
+                </div>
+
+                <h4 style="margin-top: 15px; color: #667eea; font-size: 13px;">Instruções</h4>
+                <div class="legend-item">
+                    • Arrasta para mover<br>
+                    • Scroll para zoom<br>
+                    • Clica em nós para info<br>
+                    • Duplo clique para expandir
+                </div>
+            </div>
+
+            <div id="info" class="info-panel">
+                <h4 id="info-title">Nó Selecionado</h4>
+                <p id="info-desc">Clica num nó para ver detalhes</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // Definir dados
+        const nodes = new vis.DataSet([
+            // INPUT
+            { id: 'meta-api', label: 'Meta Ads API', color: '#FF6B6B', title: 'Meta Ads API\nFonte de dados das campanhas' },
+
+            // CLIENTS
+            { id: 'meta-client', label: 'MetaAdsClient', color: '#4ECDC4', title: 'MetaAdsClient\nAutenticação e fetch de dados' },
+            { id: 'ghl-client', label: 'GHLClient', color: '#95E1D3', title: 'GHLClient\nAutenticação GHL' },
+            { id: 'slack-client', label: 'SlackNotifier', color: '#95E1D3', title: 'SlackNotifier\nNotificações Slack' },
+
+            // PROCESSING
+            { id: 'fetch', label: 'Fetch Campaigns', color: '#4ECDC4', title: 'Fetch Campaigns\nBusca todas as campanhas' },
+            { id: 'insights', label: 'Get Insights', color: '#4ECDC4', title: 'Get Insights\nMetricas de cada campanha' },
+            { id: 'filter', label: 'Filter Data', color: '#4ECDC4', title: 'Filter Data\nFiltra por performance (>0.7)' },
+            { id: 'rank', label: 'Rank Items', color: '#4ECDC4', title: 'Rank Items\nClassifica top 5' },
+
+            // GENERATION
+            { id: 'generator', label: 'Newsletter Generator', color: '#4ECDC4', title: 'Newsletter Generator\nGera HTML e email' },
+            { id: 'template', label: 'Template Engine', color: '#4ECDC4', title: 'Template Engine\nJinja2 rendering' },
+            { id: 'html', label: 'Email HTML', color: '#4ECDC4', title: 'Email HTML\nHTML formatado' },
+
+            // OUTPUT
+            { id: 'ghl-api', label: 'GHL API', color: '#95E1D3', title: 'GHL API\nScheduling emails' },
+            { id: 'slack-api', label: 'Slack API', color: '#95E1D3', title: 'Slack API\nNotificações' },
+
+            // ACTIONS
+            { id: 'schedule', label: 'Schedule Email', color: '#F9CA24', title: 'Schedule Email\nAgenda no GHL' },
+            { id: 'notify', label: 'Send Notification', color: '#F9CA24', title: 'Send Notification\nNotifica no Slack' },
+
+            // DOCUMENTATION
+            { id: 'docs', label: '📚 Documentação', color: '#667EEA', title: 'Documentação Completa\nGuides, APIs, Setup' },
+            { id: 'strategy', label: 'Newsletter Strategy', color: '#667EEA', title: 'Newsletter Strategy\nPadrões e templates' },
+            { id: 'templates', label: 'Content Templates', color: '#667EEA', title: 'Content Templates\n5 templates prontos' },
+            { id: 'metrics', label: 'Performance Metrics', color: '#667EEA', title: 'Performance Metrics\nMedição e otimização' },
+            { id: 'moneymaker', label: 'MoneyMaker Insights', color: '#667EEA', title: 'MoneyMaker Insights\nAnálise do João' },
+        ]);
+
+        const edges = new vis.DataSet([
+            // INPUT FLOW
+            { from: 'meta-api', to: 'meta-client', arrows: 'to', color: {color: '#FF6B6B'}, label: 'dados' },
+
+            // FETCH FLOW
+            { from: 'meta-client', to: 'fetch', arrows: 'to', color: {color: '#4ECDC4'} },
+            { from: 'fetch', to: 'insights', arrows: 'to', color: {color: '#4ECDC4'} },
+
+            // PROCESS FLOW
+            { from: 'insights', to: 'filter', arrows: 'to', color: {color: '#4ECDC4'}, label: 'score>0.7' },
+            { from: 'filter', to: 'rank', arrows: 'to', color: {color: '#4ECDC4'}, label: 'top 5' },
+
+            // GENERATION FLOW
+            { from: 'rank', to: 'generator', arrows: 'to', color: {color: '#4ECDC4'} },
+            { from: 'template', to: 'generator', arrows: 'to', color: {color: '#4ECDC4'} },
+            { from: 'generator', to: 'html', arrows: 'to', color: {color: '#4ECDC4'} },
+
+            // OUTPUT FLOW
+            { from: 'html', to: 'ghl-client', arrows: 'to', color: {color: '#95E1D3'} },
+            { from: 'ghl-client', to: 'schedule', arrows: 'to', color: {color: '#95E1D3'} },
+            { from: 'schedule', to: 'ghl-api', arrows: 'to', color: {color: '#95E1D3'}, label: 'email' },
+
+            // NOTIFICATION
+            { from: 'schedule', to: 'slack-client', arrows: 'to', color: {color: '#95E1D3'} },
+            { from: 'slack-client', to: 'notify', arrows: 'to', color: {color: '#95E1D3'} },
+            { from: 'notify', to: 'slack-api', arrows: 'to', color: {color: '#95E1D3'}, label: 'msg' },
+
+            // DOCUMENTATION CONNECTIONS
+            { from: 'docs', to: 'strategy', arrows: 'to', dashes: true, color: {color: '#667EEA'} },
+            { from: 'docs', to: 'templates', arrows: 'to', dashes: true, color: {color: '#667EEA'} },
+            { from: 'docs', to: 'metrics', arrows: 'to', dashes: true, color: {color: '#667EEA'} },
+            { from: 'docs', to: 'moneymaker', arrows: 'to', dashes: true, color: {color: '#667EEA'} },
+        ]);
+
+        // Info box mapping
+        const infoData = {
+            'meta-api': {
+                title: 'Meta Ads API',
+                desc: 'Fonte de dados\nRetorna campanhas e insights\nv18.0'
+            },
+            'meta-client': {
+                title: 'MetaAdsClient',
+                desc: 'src/integrations/meta_ads.py\nAutenticação com token\nFetch campaigns e insights'
+            },
+            'fetch': {
+                title: 'Fetch Campaigns',
+                desc: 'Lista todas as campanhas\nFiltra por status ativo\nRetorna meta data'
+            },
+            'insights': {
+                title: 'Get Insights',
+                desc: 'Extrai métricas\nRoas, CTR, CPC, Conversões\nÚltimos 30 dias'
+            },
+            'filter': {
+                title: 'Filter Data',
+                desc: 'Calcula score performance\nFiltra: score > 0.7\nRemove itens fracos'
+            },
+            'rank': {
+                title: 'Rank Items',
+                desc: 'Ordena por performance\nSeleciona top 5\nPrepara para newsletter'
+            },
+            'generator': {
+                title: 'Newsletter Generator',
+                desc: 'src/newsletter/generator.py\nProcessa dados\nGera HTML com Jinja2'
+            },
+            'schedule': {
+                title: 'Schedule Email',
+                desc: 'Cria contato em GHL\nAgenda para amanhã\nObtém ID do email'
+            },
+            'notify': {
+                title: 'Send Notification',
+                desc: 'Envia message ao Slack\nInclui detalhes sucesso\nTimestamp'
+            },
+            'strategy': {
+                title: 'Newsletter Strategy',
+                desc: 'docs/guides/newsletter-strategy.md\nPadrões de assunto\nEstrutura de conteúdo\n4-week cycle'
+            },
+            'templates': {
+                title: 'Content Templates',
+                desc: 'docs/guides/newsletter-templates.md\n5 templates prontos\nEducação, Comparação, Case Study, Provocação'
+            },
+            'metrics': {
+                title: 'Performance Metrics',
+                desc: 'docs/guides/newsletter-performance.md\nOpen rate, CTR, Conversão\nBenchmarks e otimização'
+            },
+            'moneymaker': {
+                title: 'MoneyMaker Insights',
+                desc: 'docs/guides/moneymaker-insights.md\nAnálise do João Gonçalves\nPadrões que funcionam'
+            }
+        };
+
+        const container = document.getElementById('network');
+        const options = {
+            physics: {
+                enabled: true,
+                barnesHut: {
+                    gravitationalConstant: -26000,
+                    centralGravity: 0.3,
+                    springLength: 200,
+                    springConstant: 0.04
+                },
+                maxVelocity: 50,
+                solver: 'barnesHut',
+                timestep: 0.35,
+                stabilization: { iterations: 200 }
+            },
+            interaction: {
+                hover: true,
+                navigationButtons: true,
+                keyboard: true
+            },
+            nodes: {
+                font: {
+                    size: 13,
+                    color: '#333'
+                },
+                borderWidth: 2,
+                borderWidthSelected: 4,
+                shadow: {
+                    enabled: true,
+                    color: 'rgba(0,0,0,0.2)',
+                    size: 10,
+                    x: 5,
+                    y: 5
+                }
+            },
+            edges: {
+                font: {
+                    size: 10,
+                    color: '#666',
+                    background: {
+                        enabled: true,
+                        color: 'white'
+                    }
+                },
+                arrows: {
+                    to: {enabled: true, scaleFactor: 0.5},
+                    middle: {enabled: false},
+                    from: {enabled: false}
+                },
+                smooth: {
+                    type: 'continuous'
+                },
+                width: 2
+            }
+        };
+
+        const network = new vis.Network(container, {nodes: nodes, edges: edges}, options);
+
+        // Click event
+        network.on('click', function(params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                const infoPanel = document.getElementById('info');
+                const infoTitle = document.getElementById('info-title');
+                const infoDesc = document.getElementById('info-desc');
+
+                if (infoData[nodeId]) {
+                    infoTitle.textContent = infoData[nodeId].title;
+                    infoDesc.textContent = infoData[nodeId].desc;
+                    infoPanel.classList.add('visible');
+                }
+            }
+        });
+
+        // Double click to expand
+        network.on('doubleClick', function(params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                console.log('Expandir:', nodeId);
+            }
+        });
+
+        // Fit network on load
+        setTimeout(() => {
+            network.fit({
+                animation: {
+                    duration: 1000,
+                    easingFunction: 'easeInOutQuad'
+                }
+            });
+        }, 1000);
+    </script>
+</body>
+</html>
