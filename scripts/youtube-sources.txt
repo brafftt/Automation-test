@@ -1,0 +1,7 @@
+# Fontes YouTube para a knowledge base do copywriter.
+# Uma URL por linha. Linhas que começam por # são comentários.
+# Corre `python scripts/sync_youtube.py` para sincronizar.
+#
+# Exemplos:
+# https://www.youtube.com/watch?v=dQw4w9WgXcQ
+# https://youtu.be/dQw4w9WgXcQ
